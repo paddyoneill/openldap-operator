@@ -30,6 +30,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
+	"github.com/nscaledev/openldap-operator/internal/builder"
 )
 
 // DirectoryReconciler reconciles a Directory object
@@ -37,6 +38,7 @@ type DirectoryReconciler struct {
 	client.Client
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
+	Builder  *builder.Builder
 }
 
 const (
