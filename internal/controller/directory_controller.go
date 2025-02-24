@@ -25,6 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
@@ -35,6 +36,10 @@ type DirectoryReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
+
+const (
+	directoryFinalizer = "openldap.nscale.dev/directoryFinalizer"
+)
 
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/status,verbs=get;update;patch
@@ -65,6 +70,38 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		if err := r.Status().Update(ctx, directory); err != nil {
 			logger.Error(err, "Failed to update directory status")
 			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
+
+	// Add finalizer if needed
+	if directory.ObjectMeta.DeletionTimestamp.IsZero() && !controllerutil.ContainsFinalizer(directory, directoryFinalizer) {
+		controllerutil.AddFinalizer(directory, directoryFinalizer)
+		if err := r.Update(ctx, directory); err != nil {
+			logger.Error(err, "failed to update directory with finalizer")
+			return ctrl.Result{}, err
+		}
+	}
+
+	// Directory marked for deletion
+	if !directory.ObjectMeta.DeletionTimestamp.IsZero() {
+		if controllerutil.ContainsFinalizer(directory, directoryFinalizer) {
+			logger.Info("performing finalizer actions for directory")
+			meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+				Type:    v1alpha1.DirectoryDegradedCondition,
+				Status:  metav1.ConditionTrue,
+				Reason:  "Finalizing",
+				Message: "Performing finalizer actions",
+			})
+			if err := r.Status().Update(ctx, directory); err != nil {
+				logger.Error(err, "failed to update directory status")
+				return ctrl.Result{}, err
+			}
+			controllerutil.RemoveFinalizer(directory, directoryFinalizer)
+			if err := r.Update(ctx, directory); err != nil {
+				logger.Error(err, "failed to remove finalizer from directory")
+				return ctrl.Result{}, err
+			}
 		}
 		return ctrl.Result{}, nil
 	}
