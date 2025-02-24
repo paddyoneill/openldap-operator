@@ -38,6 +38,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	openldapv1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
+	"github.com/nscaledev/openldap-operator/internal/builder"
 	"github.com/nscaledev/openldap-operator/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
@@ -206,6 +207,7 @@ func main() {
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		Recorder: mgr.GetEventRecorderFor("directory-controller"),
+		Builder:  builder.NewBuilder(mgr.GetScheme()),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Directory")
 		os.Exit(1)
