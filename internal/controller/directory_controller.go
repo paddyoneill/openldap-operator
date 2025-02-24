@@ -19,12 +19,15 @@ package controller
 import (
 	"context"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	openldapv1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
+	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
 )
 
 // DirectoryReconciler reconciles a Directory object
@@ -37,19 +40,34 @@ type DirectoryReconciler struct {
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Directory object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.4/pkg/reconcile
+// Reconcile directory resource
 func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	directory := &v1alpha1.Directory{}
+	if err := r.Get(ctx, req.NamespacedName, directory); err != nil {
+		if apierrors.IsNotFound(err) {
+			logger.Info("directory not found, ignoring since it must have been deleted")
+			return ctrl.Result{}, nil
+		}
+		logger.Error(err, "failed to retrieve directory")
+		return ctrl.Result{}, err
+	}
+
+	// Set directory condition to Unknown if no condition is already defined
+	if directory.Status.Conditions == nil || len(directory.Status.Conditions) == 0 {
+		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+			Type:    v1alpha1.DirectoryAvailableCondition,
+			Status:  metav1.ConditionUnknown,
+			Reason:  "Reconciling",
+			Message: "Starting reconciler for new directory",
+		})
+		if err := r.Status().Update(ctx, directory); err != nil {
+			logger.Error(err, "Failed to update directory status")
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -57,7 +75,7 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 // SetupWithManager sets up the controller with the Manager.
 func (r *DirectoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&openldapv1alpha1.Directory{}).
+		For(&v1alpha1.Directory{}).
 		Named("directory").
 		Complete(r)
 }

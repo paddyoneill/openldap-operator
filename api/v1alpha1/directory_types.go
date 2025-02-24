@@ -20,22 +20,21 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
+const (
+	// directoryAvailableCondition represents the current status of a directory
+	DirectoryAvailableCondition = "Available"
+	// directoryDegradedCondition represents the status of a directory while resources are being deleted
+	DirectoryDegradedCondition = "Degraded"
+)
 
 // DirectorySpec defines the desired state of Directory.
 type DirectorySpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Directory. Edit directory_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
 }
 
 // DirectoryStatus defines the observed state of Directory.
 type DirectoryStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Slice of conditions storing the condition of the directory
+	Conditions []metav1.Condition `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
