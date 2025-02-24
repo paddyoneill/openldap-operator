@@ -7,4 +7,14 @@ layout:
 - go.kubebuilder.io/v4
 projectName: openldap-operator
 repo: github.com/nscaledev/openldap-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: nscale.com
+  group: openldap
+  kind: Directory
+  path: github.com/nscaledev/openldap-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"
