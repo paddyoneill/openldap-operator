@@ -18,7 +18,9 @@ package controller
 
 import (
 	"context"
+	"fmt"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,6 +50,7 @@ const (
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile directory resource
 func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -110,7 +113,56 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
+	if err := r.reconcileService(ctx, directory); err != nil {
+		logger.Error(err, "failed to reconcile directory service")
+		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+			Type:    v1alpha1.DirectoryAvailableCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Reconciling",
+			Message: fmt.Sprintf("failed to create service for directory %s: %s", directory.Name, err.Error()),
+		})
+		if err := r.Status().Update(ctx, directory); err != nil {
+			logger.Error(err, "Failed to update directory status")
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, err
+	}
+
+	meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+		Type:    v1alpha1.DirectoryAvailableCondition,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Reconciling",
+		Message: "Successfully reconciled resources",
+	})
+	if err := r.Status().Update(ctx, directory); err != nil {
+		logger.Error(err, "Failed to update directory status")
+		return ctrl.Result{}, err
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func (r *DirectoryReconciler) reconcileService(ctx context.Context, directory *v1alpha1.Directory) error {
+	desired, err := r.Builder.DirectoryService(directory)
+	if err != nil {
+		return err
+	}
+
+	existing := &corev1.Service{}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(desired), existing); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		return r.Create(ctx, desired)
+	}
+
+	patch := client.MergeFrom(existing.DeepCopy())
+	existing.Spec.Ports = desired.Spec.Ports
+	existing.Spec.Type = desired.Spec.Type
+	existing.Spec.Selector = desired.Spec.Selector
+
+	return r.Patch(ctx, existing, patch)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -118,5 +170,6 @@ func (r *DirectoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Directory{}).
 		Named("directory").
+		Owns(&corev1.Service{}).
 		Complete(r)
 }

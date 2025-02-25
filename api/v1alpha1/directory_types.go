@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -29,6 +30,18 @@ const (
 
 // DirectorySpec defines the desired state of Directory.
 type DirectorySpec struct {
+	// Service to create for directory
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={}
+	Service *DirectoryServiceSpec `json:"service,omitempty"`
+}
+
+type DirectoryServiceSpec struct {
+	// Type of service to create. Defaults to ClusterIP
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Enum:=ClusterIP;LoadBalancer;NodePort
+	// +kubebuilder:default:=ClusterIP
+	Type corev1.ServiceType `json:"type,omitempty"`
 }
 
 // DirectoryStatus defines the observed state of Directory.
@@ -47,6 +60,10 @@ type Directory struct {
 
 	Spec   DirectorySpec   `json:"spec,omitempty"`
 	Status DirectoryStatus `json:"status,omitempty"`
+}
+
+func (directory *Directory) ServiceName() string {
+	return directory.Name
 }
 
 // +kubebuilder:object:root=true
