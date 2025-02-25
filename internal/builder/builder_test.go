@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
 	"github.com/nscaledev/openldap-operator/internal/builder"
 )
 
@@ -15,6 +16,7 @@ var _ = Describe("Builder", func() {
 
 	BeforeEach(func() {
 		scheme = runtime.NewScheme()
+		Expect(v1alpha1.AddToScheme(scheme)).To(Succeed())
 	})
 
 	Context("create new builder", func() {
