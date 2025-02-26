@@ -52,6 +52,66 @@ spec:
                     - NodePort
                     type: string
                 type: object
+              slapd:
+                default: {}
+                description: Configuration for slapd daemon
+                properties:
+                  configDatabase:
+                    default: {}
+                    description: Global config database configuration. Refers to olcDatabase=config,cn=config
+                    properties:
+                      access:
+                        default:
+                        - to * by * none
+                        description: Access controls for config database
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  frontendDatabase:
+                    default: {}
+                    description: Global frontend database configuration. Refers to
+                      olcDatabase=frontend,cn=config
+                    properties:
+                      access:
+                        default:
+                        - to * by * read
+                        description: Access controls for frontend database
+                        items:
+                          type: string
+                        type: array
+                    type: object
+                  overlays:
+                    description: Overlays to include in olcSchemaConfig
+                    items:
+                      type: string
+                    type: array
+                  schemas:
+                    default:
+                    - core
+                    - cosine
+                    - nis
+                    description: Schemas to include in olcSchemaConfig
+                    items:
+                      enum:
+                      - collective
+                      - cobra
+                      - core
+                      - cosine
+                      - dsee
+                      - duaconf
+                      - dyngroup
+                      - inetorgperson
+                      - java
+                      - misc
+                      - msuser
+                      - namedobject
+                      - nis
+                      - openldap
+                      - pmi
+                      type: string
+                    type: array
+                type: object
             type: object
           status:
             description: DirectoryStatus defines the observed state of Directory.
