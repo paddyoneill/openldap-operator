@@ -20,6 +20,7 @@ var _ = Describe("DirectoryService", func() {
 	var directory *v1alpha1.Directory
 	var service *corev1.Service
 	var err error
+	var expectedLabels map[string]string
 
 	BeforeEach(func() {
 		scheme = runtime.NewScheme()
@@ -35,6 +36,12 @@ var _ = Describe("DirectoryService", func() {
 					Type: "some-type",
 				},
 			},
+		}
+
+		expectedLabels = map[string]string{
+			"app.kubernetes.io/name":      "openldap",
+			"app.kubernetes.io/instance":  "foo-directory",
+			"app.kubernetes.io/component": "directory",
 		}
 		service, err = Builder.DirectoryService(directory)
 	})
@@ -53,6 +60,14 @@ var _ = Describe("DirectoryService", func() {
 			Expect(service.Namespace).To(Equal(directory.Namespace))
 		})
 
+		It("adds expected labels", func() {
+			Expect(service.Labels).To(Equal(expectedLabels))
+		})
+
+		It("sets controller reference", func() {
+			Expect(service.ObjectMeta.OwnerReferences[0].Name).To(Equal(directory.Name))
+		})
+
 		It("contains the correct ports", func() {
 			Expect(len(service.Spec.Ports)).To(Equal(1))
 			Expect(service.Spec.Ports).To(Equal([]corev1.ServicePort{
@@ -68,10 +83,6 @@ var _ = Describe("DirectoryService", func() {
 
 		It("sets service type from directory spec", func() {
 			Expect(service.Spec.Type).To(Equal(directory.Spec.Service.Type))
-		})
-
-		It("sets controller reference", func() {
-			Expect(service.ObjectMeta.OwnerReferences[0].Name).To(Equal(directory.Name))
 		})
 	})
 })

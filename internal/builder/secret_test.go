@@ -18,6 +18,7 @@ var _ = Describe("Secret", func() {
 	var directory *v1alpha1.Directory
 	var secret *corev1.Secret
 	var err error
+	var expectedLabels map[string]string
 
 	BeforeEach(func() {
 		scheme = runtime.NewScheme()
@@ -28,6 +29,12 @@ var _ = Describe("Secret", func() {
 				Name:      "foo-directory",
 				Namespace: "bar",
 			},
+		}
+
+		expectedLabels = map[string]string{
+			"app.kubernetes.io/name":      "openldap",
+			"app.kubernetes.io/instance":  "foo-directory",
+			"app.kubernetes.io/component": "directory",
 		}
 		secret, err = Builder.DirectorySecret(directory)
 	})
@@ -43,8 +50,12 @@ var _ = Describe("Secret", func() {
 			Expect(secret.Namespace).To(Equal(directory.Namespace))
 		})
 
+		It("adds expected labels", func() {
+			Expect(secret.Labels).To(Equal(expectedLabels))
+		})
+
 		It("sets controller reference", func() {
-			Expect(secret.ObjectMeta.OwnerReferences[0].Name).To(Equal(directory.Name))
+			Expect(secret.ObjectMeta.OwnerReferences[0].Name).To(Equal("foo-directory"))
 		})
 
 		It("contains the correct number of keys", func() {

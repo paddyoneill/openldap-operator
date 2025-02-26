@@ -10,23 +10,22 @@ import (
 	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
 )
 
-//func NewService(obj client.Object) *corev1.Service {
-//	return &corev1.Service{
-//		ObjectMeta: metav1.ObjectMeta{
-//			Name:      .ServiceName(),
-//			Namespace: .Namespace,
-//		},
-//	}
-//}
-
 func (builder *Builder) DirectoryService(directory *v1alpha1.Directory) (*corev1.Service, error) {
 	service := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      directory.ServiceName(),
 			Namespace: directory.Namespace,
+			Labels: map[string]string{
+				"app.kubernetes.io/name":      "openldap",
+				"app.kubernetes.io/instance":  directory.Name,
+				"app.kubernetes.io/component": "directory",
+			},
 		},
 	}
 
+	service.Spec.Selector = map[string]string{
+		"app.kubernetes.io/instance": directory.Name,
+	}
 	service.Spec.Type = directory.Spec.Service.Type
 	service.Spec.Ports = []corev1.ServicePort{
 		{
