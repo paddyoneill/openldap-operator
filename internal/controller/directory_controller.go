@@ -50,6 +50,7 @@ const (
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/finalizers,verbs=update
+// +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile directory resource
@@ -113,6 +114,23 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
+	if err := r.reconcileSecret(ctx, directory); err != nil {
+		logger.Error(err, "failed to reconcile directory secret")
+		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+			Type:    v1alpha1.DirectoryAvailableCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Reconciling",
+			Message: fmt.Sprintf("failed to create secret for directory %s: %s", directory.Name, err.Error()),
+		})
+
+		if err := r.Status().Update(ctx, directory); err != nil {
+			logger.Error(err, "Failed to update directory status")
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, err
+	}
+
 	if err := r.reconcileService(ctx, directory); err != nil {
 		logger.Error(err, "failed to reconcile directory service")
 		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
@@ -121,6 +139,7 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			Reason:  "Reconciling",
 			Message: fmt.Sprintf("failed to create service for directory %s: %s", directory.Name, err.Error()),
 		})
+
 		if err := r.Status().Update(ctx, directory); err != nil {
 			logger.Error(err, "Failed to update directory status")
 			return ctrl.Result{}, err
@@ -141,6 +160,31 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *DirectoryReconciler) reconcileSecret(ctx context.Context, directory *v1alpha1.Directory) error {
+	desired, err := r.Builder.DirectorySecret(directory)
+	if err != nil {
+		return err
+	}
+
+	existing := &corev1.Secret{}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(desired), existing); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		return r.Create(ctx, desired)
+	}
+
+	slapdLdif, err := r.Builder.GenerateSlapdLdif(directory, existing.Data["password_hash"])
+	if err != nil {
+		return err
+	}
+
+	patch := client.MergeFrom(directory.DeepCopy())
+	existing.Data["slapd_ldif"] = slapdLdif
+
+	return r.Patch(ctx, existing, patch)
 }
 
 func (r *DirectoryReconciler) reconcileService(ctx context.Context, directory *v1alpha1.Directory) error {
@@ -170,6 +214,7 @@ func (r *DirectoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.Directory{}).
 		Named("directory").
+		Owns(&corev1.Secret{}).
 		Owns(&corev1.Service{}).
 		Complete(r)
 }

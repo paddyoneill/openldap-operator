@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"fmt"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -30,10 +32,52 @@ const (
 
 // DirectorySpec defines the desired state of Directory.
 type DirectorySpec struct {
+	// Configuration for slapd daemon
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={}
+	SlapdConfig *SlapdConfigSpec `json:"slapd,omitempty"`
 	// Service to create for directory
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={}
 	Service *DirectoryServiceSpec `json:"service,omitempty"`
+}
+
+type SlapdConfigSpec struct {
+	// Schemas to include in olcSchemaConfig
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={"core","cosine","nis"}
+	Schemas []Schema `json:"schemas,omitempty"`
+	// Overlays to include in olcSchemaConfig
+	// +kubebuilder:validation:Optional
+	Overlays []Overlay `json:"overlays,omitempty"`
+	// Global frontend database configuration. Refers to olcDatabase=frontend,cn=config
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={}
+	FrontendDatabase *FrontendDatabaseConfig `json:"frontendDatabase,omitempty"`
+	// Global config database configuration. Refers to olcDatabase=config,cn=config
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={}
+	ConfigDatabase *ConfigDatabaseConfig `json:"configDatabase,omitempty"`
+}
+
+// +kubebuilder:validation:Enum:=collective;cobra;core;cosine;dsee;duaconf;dyngroup;inetorgperson;java;misc;msuser;namedobject;nis;openldap;pmi
+type Schema string
+
+// +kbebuilder:validation:Enum:=accesslog;auditlog;autoca;collect;constraint;dds;deref;dyngroup;;dynlist;homedir;memberof;nestgroup;otp;pcache;ppolicy;refint;remoteauth;retcode;rwm;seqmod;sssvlv;syncprov;translucent;unique;valsort
+type Overlay string
+
+type FrontendDatabaseConfig struct {
+	// Access controls for frontend database
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={"to * by * read"}
+	Access []string `json:"access,omitempty"`
+}
+
+type ConfigDatabaseConfig struct {
+	// Access controls for config database
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default:={"to * by * none"}
+	Access []string `json:"access,omitempty"`
 }
 
 type DirectoryServiceSpec struct {
@@ -60,6 +104,10 @@ type Directory struct {
 
 	Spec   DirectorySpec   `json:"spec,omitempty"`
 	Status DirectoryStatus `json:"status,omitempty"`
+}
+
+func (directory *Directory) SecretName() string {
+	return fmt.Sprintf("%s-slapd-config", directory.Name)
 }
 
 func (directory *Directory) ServiceName() string {
