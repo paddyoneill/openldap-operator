@@ -182,6 +182,7 @@ func (r *DirectoryReconciler) reconcileSecret(ctx context.Context, directory *v1
 	}
 
 	patch := client.MergeFrom(directory.DeepCopy())
+	existing.Labels = desired.Labels
 	existing.Data["slapd_ldif"] = slapdLdif
 
 	return r.Patch(ctx, existing, patch)
@@ -202,6 +203,7 @@ func (r *DirectoryReconciler) reconcileService(ctx context.Context, directory *v
 	}
 
 	patch := client.MergeFrom(existing.DeepCopy())
+	existing.Labels = desired.Labels
 	existing.Spec.Ports = desired.Spec.Ports
 	existing.Spec.Type = desired.Spec.Type
 	existing.Spec.Selector = desired.Spec.Selector
