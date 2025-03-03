@@ -14,7 +14,14 @@ spec:
     singular: directory
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.conditions[?(@.type=="Available")].status
+      name: Available
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: Directory is the Schema for the directories API.
@@ -39,6 +46,9 @@ spec:
           spec:
             description: DirectorySpec defines the desired state of Directory.
             properties:
+              image:
+                description: Image to use for slapd container
+                type: string
               service:
                 default: {}
                 description: Service to create for directory
