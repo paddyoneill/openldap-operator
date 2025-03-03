@@ -18,13 +18,17 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -114,6 +118,23 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
+	if err := r.reconcileDefaults(ctx, directory); err != nil {
+		logger.Error(err, "failed to reconcile directory default values")
+		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+			Type:    v1alpha1.DirectoryAvailableCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Reconciling",
+			Message: fmt.Sprintf("failed to set defaults for directory: %s", err.Error()),
+		})
+
+		if err := r.Status().Update(ctx, directory); err != nil {
+			logger.Error(err, "Failed to update directory status")
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, err
+	}
+
 	if err := r.reconcileSecret(ctx, directory); err != nil {
 		logger.Error(err, "failed to reconcile directory secret")
 		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
@@ -148,6 +169,45 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	if err := r.reconcileStatefulSet(ctx, directory); err != nil {
+		logger.Error(err, "failed to reconcile directory statefulset")
+		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+			Type:    v1alpha1.DirectoryAvailableCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Reconciling",
+			Message: fmt.Sprintf("failed to create statefulset for directory %s: %s", directory.Name, err.Error()),
+		})
+
+		if err := r.Status().Update(ctx, directory); err != nil {
+			logger.Error(err, "Failed to update directory status")
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, err
+	}
+
+	sts := &appsv1.StatefulSet{}
+	err := r.Get(ctx, types.NamespacedName{Name: directory.StatefulSetName(), Namespace: directory.Namespace}, sts)
+	if err != nil {
+		logger.Error(err, "failed to retrieve statefulset")
+		return ctrl.Result{}, err
+	}
+
+	if sts.Status.Replicas != sts.Status.ReadyReplicas {
+		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
+			Type:    v1alpha1.DirectoryAvailableCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Reconciling",
+			Message: "Not all replicas are ready",
+		})
+		if err := r.Status().Update(ctx, directory); err != nil {
+			logger.Error(err, "Failed to update directory status")
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{Requeue: true}, nil
+	}
+
 	meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
 		Type:    v1alpha1.DirectoryAvailableCondition,
 		Status:  metav1.ConditionTrue,
@@ -160,6 +220,17 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *DirectoryReconciler) reconcileDefaults(ctx context.Context, directory *v1alpha1.Directory) error {
+	image, found := os.LookupEnv("OPENLDAP_IMAGE")
+	if !found {
+		return errors.New("Unable to find OpenLDAP image name from env var OPENLDAP_IMAGE")
+	}
+
+	directory.Spec.Image = image
+
+	return r.Update(ctx, directory)
 }
 
 func (r *DirectoryReconciler) reconcileSecret(ctx context.Context, directory *v1alpha1.Directory) error {
@@ -211,6 +282,30 @@ func (r *DirectoryReconciler) reconcileService(ctx context.Context, directory *v
 	return r.Patch(ctx, existing, patch)
 }
 
+func (r *DirectoryReconciler) reconcileStatefulSet(ctx context.Context, directory *v1alpha1.Directory) error {
+	desired, err := r.Builder.DirectoryStatefulSet(directory)
+	if err != nil {
+		return err
+	}
+
+	existing := &appsv1.StatefulSet{}
+	if err := r.Get(ctx, client.ObjectKeyFromObject(desired), existing); err != nil {
+		if !apierrors.IsNotFound(err) {
+			return err
+		}
+		return r.Create(ctx, desired)
+	}
+
+	patch := client.MergeFrom(existing.DeepCopy())
+	existing.Labels = desired.Labels
+	existing.Spec.Selector = desired.Spec.Selector
+	existing.Spec.ServiceName = desired.Spec.ServiceName
+	existing.Spec.Replicas = desired.Spec.Replicas
+	existing.Spec.Template.Spec = desired.Spec.Template.Spec
+
+	return r.Patch(ctx, existing, patch)
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *DirectoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
@@ -218,5 +313,6 @@ func (r *DirectoryReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Named("directory").
 		Owns(&corev1.Secret{}).
 		Owns(&corev1.Service{}).
+		Owns(&appsv1.StatefulSet{}).
 		Complete(r)
 }

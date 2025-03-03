@@ -66,6 +66,9 @@ spec:
         image: controller:latest
         name: manager
         ports: []
+        env:
+        - name: OPENLDAP_IMAGE
+          value: openldap:2.6.8-r0
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

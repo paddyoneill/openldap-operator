@@ -32,6 +32,9 @@ const (
 
 // DirectorySpec defines the desired state of Directory.
 type DirectorySpec struct {
+	// Image to use for slapd container
+	// +kubebuilder:validation:Optional
+	Image string `json:"image,omitempty"`
 	// Configuration for slapd daemon
 	// +kubebuilder:validation:Optional
 	// +kubebuilder:default:={}
@@ -96,7 +99,8 @@ type DirectoryStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-
+// +kubebuilder:printcolumn:name="Available",type="string",JSONPath=`.status.conditions[?(@.type=="Available")].status`
+// +kubebuilder:printcolumn:name="Age", type="date",JSONPath=`.metadata.creationTimestamp`
 // Directory is the Schema for the directories API.
 type Directory struct {
 	metav1.TypeMeta   `json:",inline"`
@@ -112,6 +116,10 @@ func (directory *Directory) SecretName() string {
 
 func (directory *Directory) ServiceName() string {
 	return directory.Name
+}
+
+func (directory *Directory) StatefulSetName() string {
+	return fmt.Sprintf("%s-slapd", directory.Name)
 }
 
 // +kubebuilder:object:root=true
