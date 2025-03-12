@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/nscaledev/openldap-operator/test/utils"
+	"github.com/paddyoneill/openldap-operator/test/utils"
 )
 
 var (

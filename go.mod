@@ -1,4 +1,4 @@
-module github.com/nscaledev/openldap-operator
+module github.com/paddyoneill/openldap-operator
 
 go 1.23.0
 

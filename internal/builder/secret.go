@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
-	"github.com/nscaledev/openldap-operator/internal/utils"
+	v1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
+	"github.com/paddyoneill/openldap-operator/internal/utils"
 )
 
 func (builder *Builder) DirectorySecret(directory *v1alpha1.Directory) (*corev1.Secret, error) {
@@ -72,6 +72,7 @@ objectClass: olcModuleList
 cn: module
 olcModulePath: /usr/lib/openldap
 olcModuleLoad: argon2.so
+olcModuleLoad: back_mdb.so
 
 dn: cn=schema,cn=config
 objectClass: olcSchemaConfig

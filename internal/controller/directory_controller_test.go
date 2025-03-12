@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	openldapv1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
+	openldapv1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
 )
 
 var _ = Describe("Directory Controller", func() {

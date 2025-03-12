@@ -7,7 +7,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
+	v1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
 )
 
 func (builder *Builder) DirectoryStatefulSet(directory *v1alpha1.Directory) (*appsv1.StatefulSet, error) {
@@ -65,6 +65,12 @@ func (builder *Builder) DirectoryStatefulSet(directory *v1alpha1.Directory) (*ap
 			Name:            "slapd",
 			Image:           directory.Spec.Image,
 			ImagePullPolicy: corev1.PullIfNotPresent,
+			Env: []corev1.EnvVar{
+				{
+					Name:  "OPENLDAP_ADMIN_PASS",
+					Value: "{ARGON2}$argon2i$v=19$m=4096,t=3,p=1$UpVRNHyA+CG4MyDdJd1sWA$rSPyD1ir9UISm8+CAwNonMJdiVflnvWLLeZ6wrw+gVY",
+				},
+			},
 			Ports: []corev1.ContainerPort{
 				{
 					Name:          "ldap",
