@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.17.0
-  name: directories.openldap.nscale.com
+  name: directories.openldap.my.domain
 spec:
-  group: openldap.nscale.com
+  group: openldap.my.domain
   names:
     kind: Directory
     listKind: DirectoryList

@@ -7,7 +7,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
-	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
+	v1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
 )
 
 func (builder *Builder) DirectoryService(directory *v1alpha1.Directory) (*corev1.Service, error) {

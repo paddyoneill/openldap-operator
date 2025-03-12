@@ -6,8 +6,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime"
 
-	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
-	"github.com/nscaledev/openldap-operator/internal/builder"
+	v1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
+	"github.com/paddyoneill/openldap-operator/internal/builder"
 )
 
 var _ = Describe("Builder", func() {

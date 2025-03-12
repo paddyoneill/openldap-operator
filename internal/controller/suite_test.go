@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	openldapv1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
+	openldapv1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
 

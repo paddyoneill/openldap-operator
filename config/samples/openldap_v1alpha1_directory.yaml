@@ -1,4 +1,4 @@
-apiVersion: openldap.nscale.com/v1alpha1
+apiVersion: openldap.my.domain/v1alpha1
 kind: Directory
 metadata:
   labels:

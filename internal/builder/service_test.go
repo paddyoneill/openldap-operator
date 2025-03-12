@@ -10,8 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/ptr"
 
-	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
-	"github.com/nscaledev/openldap-operator/internal/builder"
+	v1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
+	"github.com/paddyoneill/openldap-operator/internal/builder"
 )
 
 var _ = Describe("DirectoryService", func() {

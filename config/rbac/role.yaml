@@ -18,7 +18,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - openldap.nscale.com
+  - openldap.my.domaim
   resources:
   - directories
   verbs:
@@ -30,13 +30,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - openldap.nscale.com
+  - openldap.my.domaim
   resources:
   - directories/finalizers
   verbs:
   - update
 - apiGroups:
-  - openldap.nscale.com
+  - openldap.my.domaim
   resources:
   - directories/status
   verbs:

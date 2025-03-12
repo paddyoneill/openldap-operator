@@ -35,8 +35,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	v1alpha1 "github.com/nscaledev/openldap-operator/api/v1alpha1"
-	"github.com/nscaledev/openldap-operator/internal/builder"
+	v1alpha1 "github.com/paddyoneill/openldap-operator/api/v1alpha1"
+	"github.com/paddyoneill/openldap-operator/internal/builder"
 )
 
 // DirectoryReconciler reconciles a Directory object
@@ -48,12 +48,12 @@ type DirectoryReconciler struct {
 }
 
 const (
-	directoryFinalizer = "openldap.nscale.dev/directoryFinalizer"
+	directoryFinalizer = "openldap.my.domain/directoryFinalizer"
 )
 
-// +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=openldap.nscale.com,resources=directories/finalizers,verbs=update
+// +kubebuilder:rbac:groups=openldap.my.domaim,resources=directories,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=openldap.my.domaim,resources=directories/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=openldap.my.domaim,resources=directories/finalizers,verbs=update
 // +kubebuilder:rbac:groups=core,resources=secrets,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
 
