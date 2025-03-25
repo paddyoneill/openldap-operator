@@ -82,7 +82,7 @@ var _ = Describe("Statefulset", func() {
 		})
 
 		It("sets correct volumes", func() {
-			Expect(len(sts.Spec.Template.Spec.Volumes)).To(Equal(2))
+			Expect(len(sts.Spec.Template.Spec.Volumes)).To(HaveLen(2))
 			Expect(sts.Spec.Template.Spec.Volumes).To(Equal([]corev1.Volume{
 				{
 					Name: "slapd-ldif",
@@ -102,7 +102,7 @@ var _ = Describe("Statefulset", func() {
 		})
 
 		It("creates correct pod spec", func() {
-			Expect(len(sts.Spec.Template.Spec.Containers)).To(Equal(1))
+			Expect(len(sts.Spec.Template.Spec.Containers)).To(HaveLen(1))
 			Expect(sts.Spec.Template.Spec.Containers[0].Name).To(Equal("slapd"))
 			Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("test-image:some-tag"))
 			Expect(sts.Spec.Template.Spec.Containers[0].ImagePullPolicy).To(Equal(corev1.PullIfNotPresent))
