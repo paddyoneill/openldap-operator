@@ -46,6 +46,7 @@ type DirectorySpec struct {
 	Service *DirectoryServiceSpec `json:"service,omitempty"`
 }
 
+// SlapdConfigSpec defines the desired configuration of the slapd daemon
 type SlapdConfigSpec struct {
 	// Schemas to include in olcSchemaConfig
 	// +kubebuilder:validation:Optional
@@ -64,6 +65,7 @@ type SlapdConfigSpec struct {
 	ConfigDatabase *ConfigDatabaseConfig `json:"configDatabase,omitempty"`
 }
 
+// Type to represent a valid LDAP schema
 // +kubebuilder:validation:Enum:=collective;cobra;core;cosine;dsee;duaconf;dyngroup;inetorgperson;java;misc;msuser;namedobject;nis;openldap;pmi
 type Schema string
 
@@ -71,7 +73,7 @@ func (s Schema) String() string {
 	return string(s)
 }
 
-// +kubebuilder:default:={}
+// Type to represent a list of LDAP schemas
 type SchemaList []Schema
 
 func (sl SchemaList) Join() string {
@@ -91,9 +93,11 @@ func (sl SchemaList) Join() string {
 	return b.String()
 }
 
+// Type to represent a valid LDAP overlay
 // +kbebuilder:validation:Enum:=accesslog;auditlog;autoca;collect;constraint;dds;deref;dyngroup;dynlist;homedir;memberof;nestgroup;otp;pcache;ppolicy;refint;remoteauth;retcode;rwm;seqmod;sssvlv;syncprov;translucent;unique;valsort
 type Overlay string
 
+// Frontend Database specific config
 type FrontendDatabaseConfig struct {
 	// Access controls for frontend database
 	// +kubebuilder:validation:Optional
@@ -101,6 +105,7 @@ type FrontendDatabaseConfig struct {
 	Access []string `json:"access,omitempty"`
 }
 
+// Config Database specific config
 type ConfigDatabaseConfig struct {
 	// Access controls for config database
 	// +kubebuilder:validation:Optional
@@ -108,6 +113,7 @@ type ConfigDatabaseConfig struct {
 	Access []string `json:"access,omitempty"`
 }
 
+// Spec of desired service to create for OpenLDAP instance
 type DirectoryServiceSpec struct {
 	// Type of service to create. Defaults to ClusterIP
 	// +kubebuilder:validation:Optional
