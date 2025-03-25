@@ -94,6 +94,7 @@ spec:
                   overlays:
                     description: Overlays to include in olcSchemaConfig
                     items:
+                      description: Type to represent a valid LDAP overlay
                       type: string
                     type: array
                   schemas:
@@ -104,6 +105,7 @@ spec:
                     - inetorgperson
                     description: Schemas to include in olcSchemaConfig
                     items:
+                      description: Type to represent a valid LDAP schema
                       enum:
                       - collective
                       - cobra
