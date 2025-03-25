@@ -45,14 +45,6 @@ func (builder *Builder) DirectoryStatefulSet(directory *v1alpha1.Directory) (*ap
 
 	sts.Spec.Template.Spec.Volumes = []corev1.Volume{
 		{
-			Name: "slapd-ldif",
-			VolumeSource: corev1.VolumeSource{
-				Secret: &corev1.SecretVolumeSource{
-					SecretName: directory.SecretName(),
-				},
-			},
-		},
-		{
 			Name: "slapd-data-dir",
 			VolumeSource: corev1.VolumeSource{
 				EmptyDir: &corev1.EmptyDirVolumeSource{},
@@ -67,8 +59,19 @@ func (builder *Builder) DirectoryStatefulSet(directory *v1alpha1.Directory) (*ap
 			ImagePullPolicy: corev1.PullIfNotPresent,
 			Env: []corev1.EnvVar{
 				{
-					Name:  "OPENLDAP_ADMIN_PASS",
-					Value: "{ARGON2}$argon2i$v=19$m=4096,t=3,p=1$UpVRNHyA+CG4MyDdJd1sWA$rSPyD1ir9UISm8+CAwNonMJdiVflnvWLLeZ6wrw+gVY",
+					Name: "OPENLDAP_CN_CONFIG_PASSWORD",
+					ValueFrom: &corev1.EnvVarSource{
+						SecretKeyRef: &corev1.SecretKeySelector{
+							LocalObjectReference: corev1.LocalObjectReference{
+								Name: directory.SecretName(),
+							},
+							Key: "password",
+						},
+					},
+				},
+				{
+					Name:  "OPENLDAP_SCHEMAS",
+					Value: directory.Spec.SlapdConfig.Schemas.Join(),
 				},
 			},
 			Ports: []corev1.ContainerPort{
@@ -79,12 +82,6 @@ func (builder *Builder) DirectoryStatefulSet(directory *v1alpha1.Directory) (*ap
 				},
 			},
 			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "slapd-ldif",
-					MountPath: "/etc/openldap/slapd.ldif",
-					SubPath:   "slapd_ldif",
-					ReadOnly:  true,
-				},
 				{
 					Name:      "slapd-data-dir",
 					MountPath: "/etc/openldap/slapd.d",
