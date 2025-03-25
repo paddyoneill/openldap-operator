@@ -34,13 +34,10 @@ var _ = Describe("Statefulset", func() {
 			},
 		}
 		sts, err = Builder.DirectoryStatefulSet(directory)
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	Context("create directory statefulset", func() {
-		It("doesn't return an error", func() {
-			Expect(err).ToNot(HaveOccurred())
-		})
-
 		It("returns a statefulset with correct metadata", func() {
 			Expect(sts).ToNot(BeNil())
 			Expect(sts.Name).To(Equal(directory.StatefulSetName()))
@@ -82,7 +79,7 @@ var _ = Describe("Statefulset", func() {
 		})
 
 		It("sets correct volumes", func() {
-			Expect(len(sts.Spec.Template.Spec.Volumes)).To(HaveLen(2))
+			Expect(sts.Spec.Template.Spec.Volumes).To(HaveLen(2))
 			Expect(sts.Spec.Template.Spec.Volumes).To(Equal([]corev1.Volume{
 				{
 					Name: "slapd-ldif",
@@ -102,7 +99,7 @@ var _ = Describe("Statefulset", func() {
 		})
 
 		It("creates correct pod spec", func() {
-			Expect(len(sts.Spec.Template.Spec.Containers)).To(HaveLen(1))
+			Expect(sts.Spec.Template.Spec.Containers).To(HaveLen(1))
 			Expect(sts.Spec.Template.Spec.Containers[0].Name).To(Equal("slapd"))
 			Expect(sts.Spec.Template.Spec.Containers[0].Image).To(Equal("test-image:some-tag"))
 			Expect(sts.Spec.Template.Spec.Containers[0].ImagePullPolicy).To(Equal(corev1.PullIfNotPresent))
