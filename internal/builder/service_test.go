@@ -48,7 +48,7 @@ var _ = Describe("DirectoryService", func() {
 
 	Context("creates directory service", func() {
 		It("doesn't return an error", func() {
-			Expect(err).To(BeNil())
+            Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("returns a service", func() {
@@ -69,7 +69,7 @@ var _ = Describe("DirectoryService", func() {
 		})
 
 		It("contains the correct ports", func() {
-			Expect(len(service.Spec.Ports)).To(Equal(1))
+			Expect(len(service.Spec.Ports)).To(HaveLen(1))
 			Expect(service.Spec.Ports).To(Equal([]corev1.ServicePort{
 				{
 					Name:        "ldap",

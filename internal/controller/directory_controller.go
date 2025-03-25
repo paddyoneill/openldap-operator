@@ -72,7 +72,7 @@ func (r *DirectoryReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	}
 
 	// Set directory condition to Unknown if no condition is already defined
-	if directory.Status.Conditions == nil || len(directory.Status.Conditions) == 0 {
+	if len(directory.Status.Conditions) == 0 {
 		meta.SetStatusCondition(&directory.Status.Conditions, metav1.Condition{
 			Type:    v1alpha1.DirectoryAvailableCondition,
 			Status:  metav1.ConditionUnknown,

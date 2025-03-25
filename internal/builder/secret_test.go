@@ -59,7 +59,7 @@ var _ = Describe("Secret", func() {
 		})
 
 		It("contains the correct number of keys", func() {
-			Expect(len(secret.Data)).To(Equal(1))
+			Expect(len(secret.Data)).To(HaveLen(1))
 		})
 
 		It("contains a password", func() {
