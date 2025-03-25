@@ -31,15 +31,18 @@ var _ = Describe("Statefulset", func() {
 			},
 			Spec: v1alpha1.DirectorySpec{
 				Image: "test-image:some-tag",
+				SlapdConfig: &v1alpha1.SlapdConfigSpec{
+					Schemas: v1alpha1.SchemaList{},
+				},
 			},
 		}
 		sts, err = Builder.DirectoryStatefulSet(directory)
+		Expect(sts).ToNot(BeNil())
 		Expect(err).ToNot(HaveOccurred())
 	})
 
 	Context("create directory statefulset", func() {
 		It("returns a statefulset with correct metadata", func() {
-			Expect(sts).ToNot(BeNil())
 			Expect(sts.Name).To(Equal(directory.StatefulSetName()))
 			Expect(sts.Namespace).To(Equal("bar"))
 		})
@@ -79,16 +82,8 @@ var _ = Describe("Statefulset", func() {
 		})
 
 		It("sets correct volumes", func() {
-			Expect(sts.Spec.Template.Spec.Volumes).To(HaveLen(2))
+			Expect(sts.Spec.Template.Spec.Volumes).To(HaveLen(1))
 			Expect(sts.Spec.Template.Spec.Volumes).To(Equal([]corev1.Volume{
-				{
-					Name: "slapd-ldif",
-					VolumeSource: corev1.VolumeSource{
-						Secret: &corev1.SecretVolumeSource{
-							SecretName: "foo-directory-slapd-config",
-						},
-					},
-				},
 				{
 					Name: "slapd-data-dir",
 					VolumeSource: corev1.VolumeSource{
@@ -111,12 +106,6 @@ var _ = Describe("Statefulset", func() {
 				},
 			}))
 			Expect(sts.Spec.Template.Spec.Containers[0].VolumeMounts).To(Equal([]corev1.VolumeMount{
-				{
-					Name:      "slapd-ldif",
-					ReadOnly:  true,
-					MountPath: "/etc/openldap/slapd.ldif",
-					SubPath:   "slapd_ldif",
-				},
 				{
 					Name:      "slapd-data-dir",
 					MountPath: "/etc/openldap/slapd.d",
