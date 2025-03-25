@@ -101,6 +101,7 @@ spec:
                     - core
                     - cosine
                     - nis
+                    - inetorgperson
                     description: Schemas to include in olcSchemaConfig
                     items:
                       enum:

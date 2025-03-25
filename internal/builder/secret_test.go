@@ -59,17 +59,12 @@ var _ = Describe("Secret", func() {
 		})
 
 		It("contains the correct number of keys", func() {
-			Expect(len(secret.Data)).To(Equal(2))
+			Expect(len(secret.Data)).To(Equal(1))
 		})
 
 		It("contains a password", func() {
 			Expect(secret.Data).Should(HaveKey("password"))
 			Expect(secret.Data["password"]).ToNot(Equal([]byte{}))
-		})
-
-		It("contains a password_hash", func() {
-			Expect(secret.Data).Should(HaveKey("password_hash"))
-			Expect(secret.Data["password_hash"]).ToNot(Equal([]byte{}))
 		})
 	})
 })

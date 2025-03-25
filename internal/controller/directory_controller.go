@@ -247,14 +247,8 @@ func (r *DirectoryReconciler) reconcileSecret(ctx context.Context, directory *v1
 		return r.Create(ctx, desired)
 	}
 
-	slapdLdif, err := r.Builder.GenerateSlapdLdif(directory, existing.Data["password_hash"])
-	if err != nil {
-		return err
-	}
-
 	patch := client.MergeFrom(directory.DeepCopy())
 	existing.Labels = desired.Labels
-	existing.Data["slapd_ldif"] = slapdLdif
 
 	return r.Patch(ctx, existing, patch)
 }

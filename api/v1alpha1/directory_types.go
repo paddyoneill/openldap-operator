@@ -18,6 +18,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,8 +49,8 @@ type DirectorySpec struct {
 type SlapdConfigSpec struct {
 	// Schemas to include in olcSchemaConfig
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:default:={"core","cosine","nis"}
-	Schemas []Schema `json:"schemas,omitempty"`
+	// +kubebuilder:default:={"core","cosine","nis","inetorgperson"}
+	Schemas SchemaList `json:"schemas,omitempty"`
 	// Overlays to include in olcSchemaConfig
 	// +kubebuilder:validation:Optional
 	Overlays []Overlay `json:"overlays,omitempty"`
@@ -66,7 +67,31 @@ type SlapdConfigSpec struct {
 // +kubebuilder:validation:Enum:=collective;cobra;core;cosine;dsee;duaconf;dyngroup;inetorgperson;java;misc;msuser;namedobject;nis;openldap;pmi
 type Schema string
 
-// +kbebuilder:validation:Enum:=accesslog;auditlog;autoca;collect;constraint;dds;deref;dyngroup;;dynlist;homedir;memberof;nestgroup;otp;pcache;ppolicy;refint;remoteauth;retcode;rwm;seqmod;sssvlv;syncprov;translucent;unique;valsort
+func (s Schema) String() string {
+	return string(s)
+}
+
+// +kubebuilder:default:={}
+type SchemaList []Schema
+
+func (sl SchemaList) Join() string {
+	switch len(sl) {
+	case 0:
+		return ""
+	case 1:
+		return sl[0].String()
+	}
+
+	var b strings.Builder
+	b.WriteString(string(sl[0]))
+	for _, schema := range sl[1:] {
+		b.WriteString(",")
+		b.WriteString(schema.String())
+	}
+	return b.String()
+}
+
+// +kbebuilder:validation:Enum:=accesslog;auditlog;autoca;collect;constraint;dds;deref;dyngroup;dynlist;homedir;memberof;nestgroup;otp;pcache;ppolicy;refint;remoteauth;retcode;rwm;seqmod;sssvlv;syncprov;translucent;unique;valsort
 type Overlay string
 
 type FrontendDatabaseConfig struct {
@@ -111,7 +136,7 @@ type Directory struct {
 }
 
 func (directory *Directory) SecretName() string {
-	return fmt.Sprintf("%s-slapd-config", directory.Name)
+	return fmt.Sprintf("%s-cn-config", directory.Name)
 }
 
 func (directory *Directory) ServiceName() string {
