@@ -1,0 +1,7 @@
+apiVersion: openldap.my.domain/v1alpha1
+kind: Directory
+metadata:
+  labels:
+    app.kubernetes.io/name: openldap-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: directory-sample
